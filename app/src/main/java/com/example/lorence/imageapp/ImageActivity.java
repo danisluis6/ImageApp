@@ -8,14 +8,18 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -26,6 +30,7 @@ public class ImageActivity extends AppCompatActivity implements View.OnClickList
     private File file;
     private String path = Constants.EMPTY_STRING;
     private final static String TAG = ImageActivity.class.getSimpleName();
+    private Uri imageToUploadUri;
 
     @Override
     public void initView() {
@@ -84,8 +89,11 @@ public class ImageActivity extends AppCompatActivity implements View.OnClickList
 
     private void takePhotoByCamera() {
         if (Utils.checkPermission(this)) {
-            Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(cameraIntent, Constants.CAMERA_REQUEST);
+            Intent chooserIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            File f = new File(Environment.getExternalStorageDirectory(), "POST_IMAGE.jpg");
+            chooserIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
+            imageToUploadUri = Uri.fromFile(f);
+            startActivityForResult(chooserIntent, Constants.CAMERA_REQUEST);
         } else {
             Utils.settingPermission(this);
             return;
@@ -99,35 +107,18 @@ public class ImageActivity extends AppCompatActivity implements View.OnClickList
                 if (resultCode == RESULT_OK) {
                     if (data != null) {
                         try {
-//                            if (data.getData() != null) {
-//                                final Uri uri = data.getData();
-//                                // Get path of image from Gallery
-//                                Utils.scanFileInStorage(uri);
-//                                String selectedImagePath = getRealPathFromURI(uri);
-//                                path = new File(selectedImagePath).getAbsolutePath();
-//                                Log.i("TAG", "path: "+path);
-//                            } else {
-//                                Bitmap photo = (Bitmap) data.getExtras().get("data");
-//                                Uri tempUri = getImageUri(this, photo);
-//                                Utils.scanFileInStorage(tempUri);
-//                                File temp = new File(getRealPathFromURI(tempUri));
-//                                path = temp.getAbsolutePath();
-//                            }
-
-                            Bitmap photo = (Bitmap) data.getExtras().get("data");
-                            Uri tempUri = getImageUri(this, photo);
-                            Utils.scanFileInStorage(tempUri);
-                            File temp = new File(getRealPathFromURI(tempUri));
-                            path = temp.getAbsolutePath();
-                            Bitmap demo = BitmapFactory.decodeFile(path);
-                            Log.i("TAG", "original.width: "+demo.getWidth());
-                            Log.i("TAG", "original.height: "+demo.getHeight());
-                            Log.i("TAG", "length: "+new File(path).length());
-//                            file = new File(path);
-//                            Bitmap bitmap = MethodScaleImage.getScaledBitmap(file, 250);
-//                            if (imvCamera != null) {
-//                                imvCamera.setImageBitmap(bitmap);
-//                            }
+                            if (imageToUploadUri != null) {
+                                Uri selectedImage = imageToUploadUri;
+                                getContentResolver().notifyChange(selectedImage, null);
+                                Bitmap reducedSizeBitmap = getBitmap(imageToUploadUri.getPath());
+                                if (reducedSizeBitmap != null) {
+                                    imvCamera.setImageBitmap(reducedSizeBitmap);
+                                } else {
+                                    Toast.makeText(this, "Error while capturing Image", Toast.LENGTH_LONG).show();
+                                }
+                            } else {
+                                Toast.makeText(this, "Error while capturing Image", Toast.LENGTH_LONG).show();
+                            }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -154,5 +145,66 @@ public class ImageActivity extends AppCompatActivity implements View.OnClickList
     public Uri getImageUri(Context inContext, Bitmap bitmap) {
         String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), bitmap, null, null);
         return Uri.parse(path);
+    }
+
+    private Bitmap getBitmap(String path) {
+
+        Uri uri = Uri.fromFile(new File(path));
+        InputStream in = null;
+        try {
+            final int IMAGE_MAX_SIZE = 20 * 1024; // 1.2MP
+            in = getContentResolver().openInputStream(uri);
+
+            // Decode image size
+            BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(in, null, o);
+            in.close();
+
+
+            int scale = 1;
+            while ((o.outWidth * o.outHeight) * (1 / Math.pow(scale, 2)) >
+                    IMAGE_MAX_SIZE) {
+                scale++;
+            }
+            Log.d("", "scale = " + scale + ", orig-width: " + o.outWidth + ", orig-height: " + o.outHeight);
+
+            Bitmap b = null;
+            in = getContentResolver().openInputStream(uri);
+            if (scale > 1) {
+                scale--;
+                // scale to max possible inSampleSize that still yields an image
+                // larger than target
+                o = new BitmapFactory.Options();
+                o.inSampleSize = scale;
+                b = BitmapFactory.decodeStream(in, null, o);
+
+                // resize to desired dimensions
+                int height = b.getHeight();
+                int width = b.getWidth();
+                Log.d("", "1th scale operation dimenions - width: " + width + ", height: " + height);
+
+                double y = Math.sqrt(IMAGE_MAX_SIZE
+                        / (((double) width) / height));
+                double x = (y / height) * width;
+
+                Bitmap scaledBitmap = Bitmap.createScaledBitmap(b, (int) x,
+                        (int) y, true);
+                b.recycle();
+                b = scaledBitmap;
+
+                System.gc();
+            } else {
+                b = BitmapFactory.decodeStream(in);
+            }
+            in.close();
+
+            Log.d("", "bitmap size - width: " + b.getWidth() + ", height: " +
+                    b.getHeight());
+            return b;
+        } catch (IOException e) {
+            Log.e("", e.getMessage(), e);
+            return null;
+        }
     }
 }

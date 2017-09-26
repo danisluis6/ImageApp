@@ -12,4 +12,5 @@ public class Constants {
     public final static long DOUBLE_CLICK_TIME_DELTA = 500;
     public final static String EMPTY_STRING = "";
     public final static int UNITS = 1024;
+    public static String IMAGE_FOLDER_PATH = ".CameraFolder";
 }
