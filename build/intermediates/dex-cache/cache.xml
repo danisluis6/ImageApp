@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        is-multidex="true"
+        jar="/home/lorence/.android/build-cache/7f927ca0064f3b01c3b8f0f42f0e23d9464a6267/output/jars/classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="26.0.1"
+        sha1="a2af9c72ccaa4c5c049b500ca6ea664a4ce1f7d4">
+        <dex dex="/home/lorence/Desktop/ImageApp/app/build/intermediates/transforms/dex/debug/folders/1000/10/classes_1b2563052db7a7dd30e51339fb89befc71ec7fb4/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="/home/lorence/Desktop/ImageApp/app/build/intermediates/incremental-classes/debug/instant-run-bootstrap.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="26.0.1"
+        sha1="be8c2e91e40bc35a1226dae1c61e3236c54eb167">
+        <dex dex="/home/lorence/Desktop/ImageApp/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run-bootstrap_f3c14bbfa65fbf087c92899260fe3cfc8a045fba/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="/home/lorence/Desktop/ImageApp/app/build/intermediates/incremental-runtime-classes/debug/instant-run.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="26.0.1"
+        sha1="3be78ebc2706b2e1fe2f12d5726887a92d6c183b">
+        <dex dex="/home/lorence/Desktop/ImageApp/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run_65964f38eb14d5f9ef34be30d3f8bbeabc05bdbb/classes.dex" />
+    </item>
+
+</items>
